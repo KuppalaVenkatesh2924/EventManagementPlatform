@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #ffffff, #e9ecef);
+    }
+    .container {
+      max-width: 450px;
+      margin: 70px auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: 1px solid #bbb;
+      font-size: 16px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 17px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background: #005fcc;
+    }
+    .error-msg {
+      color: red;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .back {
+      margin-top: 15px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #666;
+    }
+    .back:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2 id="signup-title"></h2>
+
+    <input type="text" id="name" placeholder="Full Name" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+
+    <button class="btn" onclick="signup()">Create Account</button>
+    <p id="error" class="error-msg"></p>
+    <div class="back" onclick="goBack()">← Back</div>
+  </div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const role = urlParams.get("role") || "attendee";
+
+  document.getElementById("signup-title").textContent =
+    role === "attendee" ? "Create Attendee Account" : "Create Organizer Account";
+
+  async function signup() {
+  const fullName = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const role = urlParams.get("role");
+ // attendee | organizer
+
+  if (!fullName || !email || !password || !role) {
+    document.getElementById("error").textContent = "All fields are required";
+    return;
+  }
+
+  document.getElementById("error").textContent = "";
+
+  const res = await fetch("https://5s70soh0c1.execute-api.us-east-1.amazonaws.com/test1/signup", {  // 🔥 REPLACE THIS
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: fullName, email: email, password: password, role: role })
+  });
+
+  const data = await res.json();
+
+  if (data.error) {
+    document.getElementById("error").textContent = data.error;
+    return;
+  }
+
+  alert("Account created! Please verify your email before logging in.");
+  window.location.href = `confirm.html?email=${email}`;
+
+}
+
+  function goBack() {
+    window.history.back();
+  }
+</script>
+
+</body>
+</html>
