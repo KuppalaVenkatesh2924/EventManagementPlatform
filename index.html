@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventHub</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #ffffff, #e9ecef);
+      color: #222;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 60px 20px;
+    }
+
+    h1 {
+      font-size: 55px;
+      font-weight: 700;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 20px;
+      color: #555;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 30px;
+      margin-top: 50px;
+    }
+
+    .card {
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      padding: 24px;
+      background: #fff;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      border-color: #007bff;
+    }
+
+    .card h3 {
+      font-size: 26px;
+      margin-bottom: 4px;
+    }
+
+    .card p {
+      margin-bottom: 20px;
+      color: #666;
+    }
+
+    ul {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    li {
+      margin: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+    }
+
+    li span {
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 18px;
+      background: #007bff;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #0066d3;
+    }
+
+    /* Selected role container */
+    .role-box {
+      max-width: 450px;
+      margin: 40px auto 0;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      border: 1px solid #bbb;
+    }
+
+    .back-btn {
+      border: none;
+      margin-top: 14px;
+      background: none;
+      color: #666;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .back-btn:hover {
+      color: #111;
+      text-decoration: underline;
+    }
+
+    .organizer-card:hover {
+  border-color: #00b894;
+  background: #e8fff4;
+}
+
+.attendee-card:hover {
+  border-color: #007bff;
+  background: #e8f1ff;
+  transition: 0.3s;
+}
+
+.organizer-btn {
+  background-color: #00b894;
+  transition: background-color 0.25s ease;
+}
+
+.organizer-btn:hover {
+  background-color: #007a5e;
+  color: white;
+}
+
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="text-center">
+      <h1>EventHub</h1>
+      <p class="subtitle">Connect, Create, Celebrate Events</p>
+      <p class="subtitle">Your complete event management platform powered by AWS</p>
+    </div>
+
+    <!-- Role Selection -->
+    <div id="selection-section" class="cards">
+      <div class="card attendee-card" onclick="selectRole('attendee')">
+        <h3>For Attendees</h3>
+        <p>Discover and register for amazing events</p>
+        <ul>
+          <li><span>✓</span> Browse upcoming events</li>
+          <li><span>✓</span> Easy registration</li>
+          <li><span>✓</span> Digital ticket download</li>
+          <li><span>✓</span> QR-based event check-in</li>
+        </ul>
+        <button class="btn">Continue as Attendee</button>
+      </div>
+
+      <div class="card organizer-card" onclick="selectRole('organizer')">
+        <h3>For Organizers</h3>
+        <p>Create and manage events</p>
+        <ul>
+          <li><span style="color: #00b894;">✓</span> Create & manage events</li>
+          <li><span style="color: #00b894;">✓</span> View registrations</li>
+          <li><span style="color: #00b894;">✓</span> Analytics dashboard</li>
+          <li><span style="color: #00b894;">✓</span> Validate QR tickets</li>
+        </ul>
+        <button class="btn organizer-btn" style="background:#00b894;">Continue as Organizer</button>
+      </div>
+    </div>
+
+    <!-- Continue to login section -->
+    <div id="login-section" style="display: none;">
+      <div class="role-box text-center">
+        <h2 id="portal-title"></h2>
+        <p>Click below to sign in using your EventHub account</p>
+        <button class="btn" onclick="redirectToLogin()">Continue to Sign In</button>
+        
+        <button class="back-btn" onclick="goBack()">Go Back</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let selectedRole = null;
+
+function selectRole(roleValue) {
+  selectedRole = roleValue;
+
+  // Save role immediately so next pages know it
+  localStorage.setItem("selectedRole", selectedRole);
+
+  document.getElementById("selection-section").style.display = "none";
+  document.getElementById("login-section").style.display = "block";
+
+  document.getElementById("portal-title").textContent =
+    selectedRole === "attendee" ? "Attendee Portal" : "Organizer Portal";
+}
+
+function goBack() {
+  selectedRole = null;
+  localStorage.removeItem("selectedRole");
+
+  document.getElementById("selection-section").style.display = "grid";
+  document.getElementById("login-section").style.display = "none";
+}
+
+function redirectToLogin() {
+  // Always fetch from localStorage to avoid variable issues
+  const roleToPass = localStorage.getItem("selectedRole");
+
+  if (!roleToPass) {
+    alert("Please select a role first.");
+    return;
+  }
+
+  // Redirect correctly
+  window.location.href = `auth-login.html?role=${roleToPass}`;
+}
+
+</script>
+
+
+</body>
+</html>
