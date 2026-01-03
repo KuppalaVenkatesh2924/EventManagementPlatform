@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Events | EventHub</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f6f9ff;
+  }
+  .navbar {
+    background: #007bff;
+    padding: 18px;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .container {
+    max-width: 950px;
+    margin: 35px auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #d6d6d6;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 18px;
+  }
+  th, td {
+    padding: 14px;
+    border-bottom: 1px solid #e3e3e3;
+    text-align: left;
+    font-size: 16px;
+  }
+  th {
+    background: #007bff;
+    color: white;
+    font-size: 17px;
+  }
+  tr:hover {
+    background: #f1f7ff;
+    cursor: pointer;
+  }
+  .no-events {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 19px;
+    color: #666;
+  }
+  .back {
+    margin-top: 20px;
+    text-align: center;
+    cursor: pointer;
+    color: #007bff;
+    font-size: 17px;
+  }
+  .back:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<div class="navbar">My Events</div>
+
+<div class="container">
+  <table id="eventsTable" style="display: none;">
+    <thead>
+      <tr>
+        <th>Event ID</th>
+        <th>Event Name</th>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Max Seats</th>
+      </tr>
+    </thead>
+    <tbody id="eventBody"></tbody>
+  </table>
+
+  <p id="emptyMessage" class="no-events" style="display: none;">No events created yet.</p>
+
+  <div class="back" onclick="goBack()">← Back to Dashboard</div>
+</div>
+
+<script>
+  const API_URL = "https://5ak2zj8p8b.execute-api.us-east-1.amazonaws.com/test/events/list";
+
+  async function loadEvents() {
+    try {
+      const res = await fetch(API_URL);
+      let events = await res.json();
+      if (events.body) events = JSON.parse(events.body);
+
+      if (!Array.isArray(events) || events.length === 0) {
+        document.getElementById("emptyMessage").style.display = "block";
+        return;
+      }
+
+      document.getElementById("eventsTable").style.display = "table";
+      const tbody = document.getElementById("eventBody");
+      tbody.innerHTML = "";
+
+      events.forEach(ev => {
+        tbody.insertAdjacentHTML(
+          "beforeend",
+          `
+            <tr onclick="openAnalytics('${ev.eventId}')">
+              <td>${ev.eventId}</td>
+              <td>${ev.name}</td>
+              <td>${ev.date}</td>
+              <td>${ev.location}</td>
+              <td>${ev.maxSeats}</td>
+            </tr>
+          `
+        );
+      });
+
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      alert("Unable to load events. Check API.");
+    }
+  }
+
+  function openAnalytics(eventId) {
+    window.location.href = "analytics.html?eventId=" + eventId;
+  }
+
+  function goBack() {
+    window.location.href = "organizer-dashboard.html";
+  }
+
+  loadEvents();
+</script>
+
+</body>
+</html>
