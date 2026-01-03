@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Organizer Dashboard | EventHub</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f6f9ff;
+  }
+  .navbar {
+    background: #007bff;
+    padding: 18px;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 10px;
+  }
+  .welcome {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .stats-box {
+    display: flex;
+    gap: 20px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    width: 280px;
+    text-align: center;
+    border: 1px solid #d6d6d6;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .stat h2 { margin: 10px 0; font-size: 42px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 22px;
+    margin-top: 30px;
+  }
+  .card {
+    background: white;
+    padding: 22px;
+    border-radius: 12px;
+    border: 1px solid #dcdcdc;
+    text-align: center;
+    cursor: pointer;
+    transition: .2s;
+  }
+  .card:hover {
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0,0,255,0.15);
+  }
+  .logout-btn {
+    margin-top: 40px;
+    padding: 12px;
+    font-size: 17px;
+    width: 100%;
+    max-width: 300px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .logout-btn:hover { background: #c80101; }
+</style>
+</head>
+<body>
+
+<div class="navbar">EventHub Organizer Dashboard</div>
+
+<div class="container">
+  <div class="welcome" id="welcomeText"></div>
+
+  <!-- <div class="stats-box">
+    <div class="stat">
+      <h3>Total Events</h3>
+      <h2 id="totalEvents">0</h2>
+    </div>
+    <div class="stat">
+      <h3>Total Registrations</h3>
+      <h2 id="totalRegs">0</h2>
+    </div>
+    <div class="stat">
+      <h3>Upcoming Events</h3>
+      <h2 id="upcomingEvents">0</h2>
+    </div>
+  </div> -->
+
+  <div class="grid">
+    <div class="card" onclick="goToCreateEvent()">Create New Event</div>
+    <div class="card" onclick="goToMyEvents()">View My Events</div>
+    <div class="card" onclick="goToScanner()">QR Ticket Validation</div>
+    <div class="card" onclick="goToAnalytics()">Analytics Report</div>
+  </div>
+
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<script>
+  // ----- AUTH CHECK -----
+  const token = localStorage.getItem("idToken");
+  const role = localStorage.getItem("role");
+
+  if (!token || role !== "organizer") {
+    alert("Access Denied — Please login first");
+    window.location.href = "auth-login.html?role=organizer";
+  }
+
+  // ----- DISPLAY ORGANIZER NAME IF SAVED-----
+  const userEmail = localStorage.getItem("email") || "";
+  document.getElementById("welcomeText").textContent =
+    userEmail ? `Welcome, ${userEmail}` : "Welcome, Organizer";
+
+  // ----- PLACEHOLDER STAT DATA -----
+  document.getElementById("totalEvents").textContent = "0";
+  document.getElementById("totalRegs").textContent = "0";
+  document.getElementById("upcomingEvents").textContent = "0";
+
+  // ----- PAGE REDIRECTIONS -----
+  function goToCreateEvent() { window.location.href = "create-event.html"; }
+  function goToMyEvents() { window.location.href = "my-events.html"; }
+  function goToScanner() { window.location.href = "qr-scanner.html"; }
+  function goToAnalytics() { window.location.href = "analytics.html"; }
+
+  // ----- LOGOUT -----
+  function logout() {
+    localStorage.clear();
+    window.location.href = "index.html";
+  }
+</script>
+
+</body>
+</html>
