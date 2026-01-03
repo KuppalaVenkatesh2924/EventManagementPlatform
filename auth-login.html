@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventHub Login</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #ffffff, #e9ecef);
+    }
+
+    .container {
+      max-width: 450px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      border: 1px solid #bbb;
+      text-align: center;
+    }
+
+    h2 { margin-bottom: 10px; }
+    .subtitle { margin-bottom: 25px; color: #666; }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      background: #007bff;
+      border: none;
+      padding: 12px;
+      font-size: 17px;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .btn:hover { background: #005fcc; }
+
+    .back {
+      margin-top: 15px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    .error-msg { color: red; margin-top: 6px; font-size: 14px; }
+
+    .create-account {
+      margin-top: 16px;
+      font-size: 15px;
+      color: #007bff;
+      cursor: pointer;
+    }
+
+    .create-account:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2 id="login-title"></h2>
+    <p class="subtitle">Sign in to continue to EventHub</p>
+
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="password" id="password" placeholder="Password" required>
+
+    <button class="btn" onclick="login()">Login</button>
+    <p id="error" class="error-msg"></p>
+
+    <div class="create-account" onclick="goToSignup()">Don't have an account? Create one</div>
+    <div class="back" onclick="goBack()">← Back</div>
+  </div>
+
+<script>
+  // Get role from query param
+  const urlParams = new URLSearchParams(window.location.search);
+  const role = urlParams.get("role");
+
+  document.getElementById("login-title").textContent =
+    role === "attendee" ? "Attendee Login" : "Organizer Login";
+
+ async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("https://5s70soh0c1.execute-api.us-east-1.amazonaws.com/test1/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  if (!data.idToken) {
+    alert(data.error || "Login failed");
+    return;
+  }
+
+  alert("Login successful!");
+  localStorage.setItem("idToken", data.idToken);
+  localStorage.setItem("accessToken", data.accessToken);
+  localStorage.setItem("refreshToken", data.refreshToken);
+
+  // 🔥 Get user info from Cognito
+  const userRes = await fetch("https://cognito-idp.us-east-1.amazonaws.com/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-amz-json-1.1",
+      "X-Amz-Target": "AWSCognitoIdentityProviderService.GetUser"
+    },
+    body: JSON.stringify({
+      AccessToken: data.accessToken
+    })
+  });
+
+  const userData = await userRes.json();
+
+  if (!userData.UserAttributes) {
+    alert("Failed to fetch user details");
+    return;
+  }
+
+  const emailAttr = userData.UserAttributes.find(a => a.Name === "email");
+  const nameAttr = userData.UserAttributes.find(a => a.Name === "name");
+  const roleAttr = userData.UserAttributes.find(a => a.Name === "custom:role");
+  const userIdAttr = userData.UserAttributes.find(a => a.Name === "sub");
+
+  localStorage.setItem("email", emailAttr?.Value || "");
+  localStorage.setItem("fullName", nameAttr?.Value || "");
+  localStorage.setItem("role", roleAttr?.Value || "");
+  localStorage.setItem("userId", userIdAttr?.Value || "");
+
+  // Redirect
+  if (roleAttr?.Value === "organizer") {
+    window.location.href = "organizer-dashboard.html";
+  } else {
+    window.location.href = "attendee-dashboard.html";
+  }
+}
+
+
+  function goBack() { window.history.back(); }
+  function goToSignup() { window.location.href = `signup.html?role=${role}`; }
+</script>
+
+</body>
+</html>
