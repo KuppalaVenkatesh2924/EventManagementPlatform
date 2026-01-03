@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Create Event | EventHub</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f6f9ff;
+  }
+  .navbar {
+    background: #007bff;
+    padding: 18px;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .container {
+    max-width: 550px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 35px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+  }
+  input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 14px;
+    border-radius: 6px;
+    border: 1px solid #aaa;
+    font-size: 16px;
+  }
+  .btn {
+    width: 100%;
+    background: #007bff;
+    padding: 14px;
+    border: none;
+    font-size: 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+  }
+  .btn:hover { background: #005fcc; }
+  .back { margin-top: 15px; text-align: center; cursor: pointer; }
+  .error { color: red; margin-top: 5px; text-align: center; }
+  .success { color: green; margin-top: 5px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="navbar">EventHub – Create New Event</div>
+
+<div class="container">
+  <input type="text" id="name" placeholder="Event Name" />
+  <input type="date" id="date" />
+  <input type="text" id="location" placeholder="Event Location" />
+  <input type="number" id="maxSeats" placeholder="Max Seats" />
+
+  <button class="btn" onclick="submitEvent()">Create Event</button>
+
+  <p id="msg" class="error"></p>
+
+  <div class="back" onclick="goBack()">← Back to Dashboard</div>
+</div>
+
+<script>
+  const CREATE_EVENT_API = "https://5ak2zj8p8b.execute-api.us-east-1.amazonaws.com/test/events/create"; // your lambda URL
+
+  async function submitEvent() {
+  const name = document.getElementById("name").value;
+  const date = document.getElementById("date").value;
+  const location = document.getElementById("location").value;
+  const maxSeats = document.getElementById("maxSeats").value;
+
+  const msg = document.getElementById("msg");
+
+  if (!name || !date || !location || !maxSeats) {
+    msg.className = "error";
+    msg.textContent = "All fields are required";
+    return;
+  }
+
+  console.log("🔵 Sending request to API...");
+
+  try {
+    const res = await fetch(CREATE_EVENT_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, date, location, maxSeats })
+    });
+
+    console.log("🟢 Response status:", res.status);
+
+    const data = await res.json();
+    console.log("🟢 Response body:", data);
+
+    if (res.status === 200) {
+      msg.className = "success";
+      msg.textContent = "Event created successfully!";
+      setTimeout(() => window.location.href = "organizer-dashboard.html", 1000);
+    } else {
+      msg.className = "error";
+      msg.textContent = data.message || "Something went wrong";
+    }
+  } catch (err) {
+    console.error("🔴 ERROR sending request:", err);
+    msg.className = "error";
+    msg.textContent = "Network error – Check browser console";
+  }
+}
+
+  function goBack() {
+    window.location.href = "organizer-dashboard.html";
+  }
+</script>
+
+</body>
+</html>
