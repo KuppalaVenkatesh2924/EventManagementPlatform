@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics | EventHub</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f6f9ff;
+  }
+  .navbar {
+    background: #007bff;
+    padding: 18px;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+  }
+  input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 14px;
+    border-radius: 6px;
+    border: 1px solid #aaa;
+    font-size: 16px;
+  }
+  .btn {
+    width: 100%;
+    background: #007bff;
+    padding: 14px;
+    border: none;
+    font-size: 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+  }
+  .btn:hover { background: #005fcc; }
+  .stats-box {
+    margin-top: 20px;
+    font-size: 18px;
+    background: #eef4ff;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  .empty {
+    text-align: center;
+    color: red;
+    margin-top: 15px;
+  }
+  .back {
+    margin-top: 15px;
+    text-align: center;
+    cursor: pointer;
+    color: #007bff;
+    font-size: 17px;
+  }
+  .back:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="navbar">EventHub – Analytics</div>
+
+<div class="container">
+  <input type="text" id="eventId" placeholder="Enter Event ID" />
+  <button class="btn" onclick="fetchAnalytics()">Get Analytics</button>
+
+  <div id="stats" class="stats-box" style="display: none;"></div>
+  <p id="msg" class="empty"></p>
+
+  <div class="back" onclick="goBack()">← Back to Dashboard</div>
+</div>
+
+<script>
+  const ANALYTICS_API = "https://5ak2zj8p8b.execute-api.us-east-1.amazonaws.com/test/stats";
+
+  async function fetchAnalytics() {
+  const eventId = document.getElementById("eventId").value.trim();
+  const msg = document.getElementById("msg");
+  const statsBox = document.getElementById("stats");
+
+  if (!eventId) {
+    msg.textContent = "Event ID is required";
+    statsBox.style.display = "none";
+    return;
+  }
+
+  msg.textContent = "";
+  statsBox.style.display = "none";
+
+  const token = localStorage.getItem("idToken");
+  if (!token) {
+    alert("Session expired — please login again");
+    window.location.href = "auth-login.html?role=organizer";
+    return;
+  }
+
+  try {
+    const res = await fetch(ANALYTICS_API, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ eventId: eventId })   // <= must match
+});
+
+
+    let json = await res.json();
+    let data = json.body ? JSON.parse(json.body) : json;  // handle API Gateway body wrapper
+
+    if (res.status !== 200) {
+      msg.textContent = data.message || "Error fetching analytics";
+      return;
+    }
+
+    statsBox.innerHTML = `
+      <b>Event ID:</b> ${data.eventId}<br><br>
+      <b>Total Registrations:</b> ${data.totalRegistrations}<br>
+      <b>Total Tickets Generated:</b> ${data.totalTickets}<br>
+      <b>Tickets Used:</b> ${data.usedTickets}<br>
+      <b>Tickets Valid:</b> ${data.validTickets}
+    `;
+    statsBox.style.display = "block";
+
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    msg.textContent = "Request blocked (likely CORS). Check API Gateway CORS.";
+  }
+}
+
+  function goBack() {
+    window.location.href = "organizer-dashboard.html";
+  }
+
+  // Autofill eventId from URL if present
+  const params = new URLSearchParams(window.location.search);
+  const passedEventId = params.get("eventId");
+  if (passedEventId) {
+    document.getElementById("eventId").value = passedEventId;
+    fetchAnalytics();
+  }
+
+  
+</script>
+
+
+</body>
+</html>
