@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0; }
+    .container {
+      max-width: 420px; margin: 70px auto; background:#fff;
+      padding:35px; border-radius:10px; text-align:center;
+      border: 1px solid #ccc;
+    }
+    input {
+      width:100%; padding:12px; margin-bottom:12px;
+      border-radius:6px; border:1px solid #bbb; font-size:16px;
+    }
+    button {
+      width:100%; padding:12px; background:#28a745; border:none;
+      color:white; border-radius:6px; font-size:17px; cursor:pointer;
+    }
+    button:hover { background:#218838; }
+    .error { color:red; margin-top:8px; font-size:14px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Email Verification</h2>
+
+  <input type="email" id="email" placeholder="Enter email used during signup" required>
+  <input type="text" id="code" placeholder="Enter 6-digit verification code" required>
+
+  <button onclick="confirmSignup()">Verify Account</button>
+  <p id="error" class="error"></p>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+const preEmail = params.get("email");
+if (preEmail) document.getElementById("email").value = preEmail;
+
+  async function confirmSignup() {
+    const email = document.getElementById("email").value.trim();
+    const code = document.getElementById("code").value.trim();
+
+    if (!email || !code) {
+      document.getElementById("error").textContent = "Both fields are required";
+      return;
+    }
+
+    const res = await fetch("https://cognito-idp.us-east-1.amazonaws.com/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-amz-json-1.1",
+        "X-Amz-Target": "AWSCognitoIdentityProviderService.ConfirmSignUp"
+      },
+      body: JSON.stringify({
+        ClientId: "63jhpkv71c12o0120ojtbkvm5k",
+        Username: email,
+        ConfirmationCode: code
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.code || data.__type) {
+      document.getElementById("error").textContent = data.message || "Verification failed";
+      return;
+    }
+
+    alert("Email verified! You can now log in.");
+    window.location.href = "auth-login.html";
+  }
+</script>
+
+</body>
+</html>
