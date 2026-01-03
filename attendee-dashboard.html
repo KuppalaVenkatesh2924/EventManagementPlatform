@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendee Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f2f2f2; }
+    .navbar { background: #222; color: white; padding: 15px; font-size: 20px; }
+    .container { padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border: 1px solid #ccc; text-align: center; }
+    th { background: #333; color: white; }
+    input {
+      padding: 6px;
+      border-radius: 5px;
+      margin-right: 8px;
+      border: 1px solid #aaa;
+    }
+    button {
+      background: #007bff;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+
+    .logout-btn {
+    margin-top: 40px;
+    padding: 12px;
+    font-size: 17px;
+    width: 100%;
+    max-width: 300px;
+    background: red;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .logout-btn:hover { background: #c80101; }
+  </style>
+</head>
+<body>
+
+<div class="navbar">🎟 Attendee Dashboard</div>
+<div class="container">
+  <h2>Available Events</h2>
+
+  <p id="emptyMessage" style="display:none; color:red;">No events available right now.</p>
+
+  <table id="eventsTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Event</th>
+        <th>Date</th>
+        <th>Location</th>
+        <th>Max Seats</th>
+        <th>Your Name</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="eventBody"></tbody>
+  </table>
+
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<script>
+  const fullName = localStorage.getItem("fullName") || "";
+  const email = localStorage.getItem("email") || "";
+  const userId = localStorage.getItem("userId") || "";
+
+  const API_URL = "https://5ak2zj8p8b.execute-api.us-east-1.amazonaws.com/test/events/list";
+
+  async function loadEvents() {
+    try {
+      const res = await fetch(API_URL);
+      let events = await res.json();
+      if (events.body) events = JSON.parse(events.body);
+
+      if (!Array.isArray(events) || events.length === 0) {
+        document.getElementById("emptyMessage").style.display = "block";
+        return;
+      }
+
+      document.getElementById("eventsTable").style.display = "table";
+      const tbody = document.getElementById("eventBody");
+      tbody.innerHTML = "";
+
+      events.forEach(ev => {
+  const id = ev.eventId || ev.id || ev._id;   // eventId fix
+
+  tbody.insertAdjacentHTML(
+    "beforeend",
+    `
+      <tr>
+        <td>${id}</td>
+        <td>${ev.name}</td>
+        <td>${ev.date}</td>
+        <td>${ev.location}</td>
+        <td>${ev.maxSeats}</td>
+        <td><input id="name-${id}" type="text" value="${fullName}" placeholder="Enter full name"></td>
+        <td><button onclick="register('${id}')">Register</button></td>
+      </tr>
+    `
+  );
+});
+
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      alert("Unable to load events.");
+    }
+  }
+
+  async function register(eventId) {
+  const nameInput = document.getElementById(`name-${eventId}`);  // <-- FIXED
+  const name = nameInput.value.trim();
+  if (!name) return alert("Enter your full name.");
+
+  const payload = { eventId, name, email, userId };
+  
+
+
+  try {
+    const res = await fetch("https://5ak2zj8p8b.execute-api.us-east-1.amazonaws.com/test/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    let data = await res.json();
+    if (data.body) data = JSON.parse(data.body); // for API Gateway wrapped response
+
+    if (data.ticketPdfUrl) {
+      alert("Registration successful! Ticket will now download.");
+      window.open(data.ticketPdfUrl, "_blank");
+    } else {
+      alert(data.message || "Registration failed.");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong while registering.");
+  }
+}
+
+  loadEvents();
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = "index.html";
+  }
+</script>
+
+</body>
+</html>
