@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QR Scanner | EventHub</title>
+
+<!-- Updated library version -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f6f9ff;
+  }
+  .navbar {
+    background: #007bff;
+    padding: 18px;
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+  }
+  .container {
+    max-width: 550px;
+    margin: 25px auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    text-align: center;
+  }
+  #reader {
+    width: 100%;
+    margin: auto;
+    min-height: 320px;
+  }
+  .msg {
+    font-size: 18px;
+    margin-top: 15px;
+  }
+  .success { color: green; }
+  .error { color: red; }
+  .back { margin-top: 15px; cursor: pointer; }
+  .back:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="navbar">EventHub – QR Scanner</div>
+
+<div class="container">
+  <div id="reader"></div>
+  <p id="msg" class="msg"></p>
+  <div class="back" onclick="goBack()">← Back to Dashboard</div>
+</div>
+
+<script>
+  const ATTENDANCE_API = "https://5ak2zj8p8b.execute-api.us-east-1.amazonaws.com/test/validate";
+
+  function showMessage(text, type) {
+    const msg = document.getElementById("msg");
+    msg.className = `msg ${type}`;
+    msg.textContent = text;
+  }
+
+  async function processQR(decodedText) {
+    const ticketId = decodedText.trim();
+
+    try {
+      const res = await fetch(ATTENDANCE_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId })
+      });
+
+      const data = await res.json();
+      
+      if (res.status === 200) showMessage(data.message, "success");
+      else showMessage(data.message || "Validation failed ❌", "error");
+
+    } catch (err) {
+      showMessage("Network error ❌", "error");
+    }
+  }
+
+  function goBack() {
+    window.location.href = "organizer-dashboard.html";
+  }
+
+  // Initialize scanner after page loads
+  window.onload = () => {
+    const qrScanner = new Html5Qrcode("reader");
+
+    // Remove console JSON warning
+    Html5Qrcode.prototype._onScanError = function() {};
+
+    Html5Qrcode.getCameras()
+      .then(cameras => {
+        if (!cameras.length) {
+          showMessage("No camera detected ❌", "error");
+          return;
+        }
+
+        const cameraId = cameras[0].id; // use 1st camera
+
+        qrScanner.start(
+          cameraId,
+          { fps: 10, qrbox: 250 },
+          decodedText => {
+            qrScanner.pause();
+            processQR(decodedText);
+            setTimeout(() => qrScanner.resume(), 2500);
+          }
+        ).catch(err => {
+          showMessage("Camera Access Failed ❌", "error");
+          console.error(err);
+        });
+
+      })
+      .catch(err => {
+        showMessage("Camera Permission Blocked ❌", "error");
+        console.error(err);
+      });
+  };
+</script>
+
+</body>
+</html>
